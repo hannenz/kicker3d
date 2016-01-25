@@ -57,16 +57,19 @@
 		light.position.z = 0;
 		scene.add(light);
 
-
 		// var loader = new THREE.JSONLoader();
-		// loader.load('yoda.js', function(geometry, materials) {
+		// loader.load('yoda.js', insertYoda);
 
-		;(function() {
+		function insertYoda(geometry, materials) {
 
-			// var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
-			// mesh.scale.set(0.01, 0.01, 0.01);
-			// mesh.position.y = -2;
-			// scene.add(mesh);
+			var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+			mesh.scale.set(0.01, 0.01, 0.01);
+			mesh.position.y = -2;
+
+			mesh.position.x = 20;
+			mesh.position.z = -30;
+
+			scene.add(mesh);
 
 			// var yoda = new THREEx.CannonBody({
 			// 	'mesh': mesh,
@@ -74,6 +77,12 @@
 			// 	'mass': 0
 			// });
 			// yoda.addTo(world);
+		}
+
+		var texture = THREE.ImageUtils.loadTexture('img/kicker_carpet.svg', {}, setup);
+
+		function setup() {
+
 		
 			var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS, 16, 16), new THREE.MeshLambertMaterial( { color: 0xe0e0e0 }));
 			ball.position.x = 0;
@@ -81,8 +90,8 @@
 			ball.position.z = 0;
 			scene.add(ball);
 			ball.position.y = 0;
-			ball.position.z = 2;
-
+			ball.position.z = 20;
+			ball.castShadow = true;
 			var bodyBall = new THREEx.CannonBody({
 				mesh : ball,
 				material : stoneMaterial
@@ -91,11 +100,14 @@
 			updateFcts.push(function(delta, now) {
 				bodyBall.update(delta, now);
 			});
-			//bodyBall.body.angularVelocity.set(300, 0, 0);
+			bodyBall.body.angularVelocity.set(300, -200, 0);
 
+			bodyBall.body.position.x = Math.random() * KICKER_LENGTH;
+			bodyBall.body.position.z = Math.random() * KICKER_WIDTH;
+			bodyBall.body.position.y = Math.random() * 20;
+			// bodyBall.body.angularVelocity.set(Math.random()* 400, Math.random() * 400, Math.random * 400);
 
- 
-			var tableGround = new THREE.Mesh(new THREE.CubeGeometry(KICKER_WIDTH, 1, KICKER_LENGTH), new THREE.MeshLambertMaterial( { color: 0x00ff00 }));
+			var tableGround = new THREE.Mesh(new THREE.CubeGeometry(KICKER_WIDTH, 1, KICKER_LENGTH), new THREE.MeshLambertMaterial({ map: texture, color: 0xffffff }));
 			tableGround.position.y = -3;
 			tableGround.position.z = 0;
 			scene.add(tableGround);
@@ -146,13 +158,14 @@
 			});
 			bodyWall4.addTo(world);
 
-			var stange = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 100, 10), new THREE.MeshLambertMaterial({ color: 0xcccccc }));
+			var stange = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 100, 32), new THREE.MeshLambertMaterial({ color: 0xcccccc }));
 			stange.position.y = 2;
 			stange.rotation.z = Math.PI / 2;
 			scene.add(stange);
 
 			var player = new THREE.Mesh(new THREE.CubeGeometry(3, 7, 1), new THREE.MeshLambertMaterial());
 			player.position.y = 2;
+			player.castShadow = true;
 			scene.add(player);
 			bodyPlayer = new THREEx.CannonBody({
 				mesh: player,
@@ -171,6 +184,16 @@
 
 			var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
+			function deg2rad(deg) {
+				var rad = deg * (Math.PI / 180);
+				console.debug(rad);
+				return rad;
+			}
+
+			document.addEventListener('wheel', function(event) {
+				kick += event.deltaY > 0 ? deg2rad(10) : deg2rad(-10);
+			});
+
 			var lastTimeMsec = null;
 			requestAnimationFrame(function animate(nowMsec) {
 				requestAnimationFrame(animate);
@@ -179,23 +202,54 @@
 				var deltaMsec = Math.min(200, nowMsec - lastTimeMsec);
 				lastTimeMsec = nowMsec;
 
+				var deltaKick = bodyPlayer.mesh.rotation.x - kick;
+				if (deltaKick > 0.1 || deltaKick <  0.1) {
+					if (kick > 0) {
+						bodyPlayer.mesh.rotation.x += 0.1;
+					}
+					else {
+						bodyPlayer.mesh.rotation.x -= 0.1;
+					}
+				}
+
 				updateFcts.forEach(function(updateFn) {
 					updateFn(deltaMsec / 1000, nowMsec / 1000);
 				});
-
-				if (kick > 0 || bodyPlayer.mesh.rotation.x < kick) {
-					player.rotation.x -= 0.1;
-				}
-
 			});
 
 			document.addEventListener('keyup', function(e) {
-				if (e.keyCode == 13) {
-					console.log('Kickin\'...!')
-					kick = Math.PI / 4;
+
+				switch (e.keyCode) {
+					case 13: 
+						console.log('Kickin\'...!')
+						kick = Math.PI / 4;
+						break;
+
+					case  27:
+						bodyBall.body.position.x = Math.random() * KICKER_LENGTH;
+						bodyBall.body.position.z = Math.random() * KICKER_WIDTH;
+	//					bodyBall.body.position.y = Math.random() * 20;
+						bodyBall.body.angularVelocity.set(Math.random()* 400, Math.random() * 400, Math.random * 400);
+						break;
+
+					case 49:
+						camera.position.x = -400;
+						camera.position.z = -400;
+						camera.position.y = 1000;
+						camera.lookAt(new THREE.Vector3(0, 0, 0));
+						break;
+
+					case 50:
+						camera.position.x = -400;
+						camera.position.z = 0;
+						camera.position.y = 100;
+						camera.lookAt(new THREE.Vector3(0, 0, 0));
+						break;
 				}
 			});
-		})();
+
+
+		}
 		</script>
 	</body>
 </html>
