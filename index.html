@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>My first Three.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.min.js"></script>
+		<!--script src="/home/hannenz/Downloads/threex.oimo/threex.oimo.js"></script-->
+		<script src="js/threex.cannonjs/vendor/cannon.js/build/cannon.min.js"></script>
+		<script src="js/threex.cannonjs/threex.cannonworld.js"></script>
+		<script src="js/threex.cannonjs/threex.cannonbody.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script>
+
+		var KICKER_WIDTH = 68;
+		var KICKER_LENGTH = 120;
+		var KICKER_HEIGHT = 7;
+		var BALL_RADIUS = 1;
+
+		var kick = 0;
+
+		var updateFcts = [];
+
+		var scene = new THREE.Scene();
+		var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10000);
+		camera.position.z = 160;
+		camera.position.y = 30;
+
+		var renderer = new THREE.WebGLRenderer();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		document.body.appendChild(renderer.domElement);
+
+		var world = new THREEx.CannonWorld().start();
+		console.debug(world.world.gravity);
+		world.world.gravity.set(0, -50, 0);
+
+		var stoneMaterial = new CANNON.Material('stone');
+		world.world.addContactMaterial(new CANNON.ContactMaterial(
+			stoneMaterial,
+			stoneMaterial,
+			0.3, // Friction
+			0.6 // Restitution
+		));
+
+		var light	= new THREE.AmbientLight( 0x444444 );
+		scene.add( light );
+
+		var light = new THREE.PointLight(0xffffff);
+		light.castShadow = true;
+		light.position.x = 0;
+		light.position.y = 100;
+		light.position.z = 0;
+		scene.add(light);
+
+
+		// var loader = new THREE.JSONLoader();
+		// loader.load('yoda.js', function(geometry, materials) {
+
+		;(function() {
+
+			// var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+			// mesh.scale.set(0.01, 0.01, 0.01);
+			// mesh.position.y = -2;
+			// scene.add(mesh);
+
+			// var yoda = new THREEx.CannonBody({
+			// 	'mesh': mesh,
+			// 	'material': stoneMaterial,
+			// 	'mass': 0
+			// });
+			// yoda.addTo(world);
+		
+			var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS, 16, 16), new THREE.MeshLambertMaterial( { color: 0xe0e0e0 }));
+			ball.position.x = 0;
+			ball.position.y = 30;
+			ball.position.z = 0;
+			scene.add(ball);
+			ball.position.y = 0;
+			ball.position.z = 2;
+
+			var bodyBall = new THREEx.CannonBody({
+				mesh : ball,
+				material : stoneMaterial
+			});
+			bodyBall.addTo(world);
+			updateFcts.push(function(delta, now) {
+				bodyBall.update(delta, now);
+			});
+			//bodyBall.body.angularVelocity.set(300, 0, 0);
+
+
+ 
+			var tableGround = new THREE.Mesh(new THREE.CubeGeometry(KICKER_WIDTH, 1, KICKER_LENGTH), new THREE.MeshLambertMaterial( { color: 0x00ff00 }));
+			tableGround.position.y = -3;
+			tableGround.position.z = 0;
+			scene.add(tableGround);
+			var bodyGround = new THREEx.CannonBody({
+				mesh : tableGround,
+				material : stoneMaterial,
+				mass: 0
+			});
+			bodyGround.addTo(world);
+
+			var wall1 = new THREE.Mesh(new THREE.CubeGeometry(1, KICKER_HEIGHT, KICKER_LENGTH), new THREE.MeshLambertMaterial({ color: 0x00ff00 }));
+			wall1.position.x = -(KICKER_WIDTH / 2);
+			scene.add(wall1);
+			var bodyWall1 = new THREEx.CannonBody({
+				mesh : wall1,
+				material : stoneMaterial,
+				mass: 0
+			});
+			bodyWall1.addTo(world);
+
+			var wall2 = new THREE.Mesh(new THREE.CubeGeometry(1, KICKER_HEIGHT, KICKER_LENGTH), new THREE.MeshLambertMaterial({ color: 0x00ff00 }));
+			wall2.position.x = (KICKER_WIDTH / 2);
+			scene.add(wall2);
+			var bodyWall2 = new THREEx.CannonBody({
+				mesh : wall2,
+				material : stoneMaterial,
+				mass: 0
+			});
+			bodyWall2.addTo(world);
+
+			var wall3 = new THREE.Mesh(new THREE.CubeGeometry(KICKER_WIDTH + 1, KICKER_HEIGHT, 1), new THREE.MeshLambertMaterial({ color: 0x00ff00 }));
+			wall3.position.z = -(KICKER_LENGTH / 2);
+			scene.add(wall3);
+			var bodyWall3 = new THREEx.CannonBody({
+				mesh : wall3,
+				material : stoneMaterial,
+				mass: 0
+			});
+			bodyWall3.addTo(world);
+
+			var wall4 = new THREE.Mesh(new THREE.CubeGeometry(KICKER_WIDTH + 1, KICKER_HEIGHT, 1), new THREE.MeshLambertMaterial({ color: 0x00ff00 }));
+			wall4.position.z = (KICKER_LENGTH / 2);
+			scene.add(wall4);
+			var bodyWall4 = new THREEx.CannonBody({
+				mesh : wall4,
+				material : stoneMaterial,
+				mass: 0
+			});
+			bodyWall4.addTo(world);
+
+			var stange = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 100, 10), new THREE.MeshLambertMaterial({ color: 0xcccccc }));
+			stange.position.y = 2;
+			stange.rotation.z = Math.PI / 2;
+			scene.add(stange);
+
+			var player = new THREE.Mesh(new THREE.CubeGeometry(3, 7, 1), new THREE.MeshLambertMaterial());
+			player.position.y = 2;
+			scene.add(player);
+			bodyPlayer = new THREEx.CannonBody({
+				mesh: player,
+				material: stoneMaterial,
+				mass: 0
+			});
+			bodyPlayer.addTo(world);
+
+			// updateFcts.push(function(delta, now) {
+			// 	bodyPlayer.update(delta, now);
+			// });
+
+			updateFcts.push(function() {
+				renderer.render(scene, camera);
+			});
+
+			var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+			var lastTimeMsec = null;
+			requestAnimationFrame(function animate(nowMsec) {
+				requestAnimationFrame(animate);
+
+				lastTimeMsec = lastTimeMsec || nowMsec - 1000/60;
+				var deltaMsec = Math.min(200, nowMsec - lastTimeMsec);
+				lastTimeMsec = nowMsec;
+
+				updateFcts.forEach(function(updateFn) {
+					updateFn(deltaMsec / 1000, nowMsec / 1000);
+				});
+
+				if (kick > 0 || bodyPlayer.mesh.rotation.x < kick) {
+					player.rotation.x -= 0.1;
+				}
+
+			});
+
+			document.addEventListener('keyup', function(e) {
+				if (e.keyCode == 13) {
+					console.log('Kickin\'...!')
+					kick = Math.PI / 4;
+				}
+			});
+		})();
+		</script>
+	</body>
+</html>
