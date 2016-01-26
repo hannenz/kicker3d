@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset=utf-8>
-		<title>My first Three.js app</title>
+		<title>Table Footbal</title>
 		<style>
 			body { margin: 0; }
 			canvas { width: 100%; height: 100% }
@@ -21,8 +21,11 @@
 		var KICKER_LENGTH = 120;
 		var KICKER_HEIGHT = 7;
 		var BALL_RADIUS = 1;
+		var N_BALLS = 20;
 
 		var kick = 0;
+
+		var balls = [];
 
 		var updateFcts = [];
 
@@ -81,31 +84,35 @@
 
 		var texture = THREE.ImageUtils.loadTexture('img/kicker_carpet.svg', {}, setup);
 
+		function dropBall(bodyBall) {
+			bodyBall.body.position.x = (KICKER_WIDTH / 2) - (Math.random() * (KICKER_WIDTH - 20) + 10);
+			bodyBall.body.position.y = Math.random() * 10;
+			bodyBall.body.position.z = (KICKER_LENGTH / 2) - (Math.random() * (KICKER_LENGTH - 20) + 10);
+			bodyBall.body.angularVelocity.set(100 - (Math.random() * 200), 100 - (Math.random() * 200), 100 - (Math.random() * 200));
+		}
+
 		function setup() {
 
-		
-			var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS, 16, 16), new THREE.MeshLambertMaterial( { color: 0xe0e0e0 }));
-			ball.position.x = 0;
-			ball.position.y = 30;
-			ball.position.z = 0;
-			scene.add(ball);
-			ball.position.y = 0;
-			ball.position.z = 20;
-			ball.castShadow = true;
-			var bodyBall = new THREEx.CannonBody({
-				mesh : ball,
-				material : stoneMaterial
-			});
-			bodyBall.addTo(world);
-			updateFcts.push(function(delta, now) {
-				bodyBall.update(delta, now);
-			});
-			bodyBall.body.angularVelocity.set(300, -200, 0);
+			for (var i = 0; i < 20; i++) {
 
-			bodyBall.body.position.x = Math.random() * KICKER_LENGTH;
-			bodyBall.body.position.z = Math.random() * KICKER_WIDTH;
-			bodyBall.body.position.y = Math.random() * 20;
-			// bodyBall.body.angularVelocity.set(Math.random()* 400, Math.random() * 400, Math.random * 400);
+				var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS, 16, 16), new THREE.MeshLambertMaterial( { color: 0xe0e0e0 }));
+				scene.add(ball);
+
+				var bodyBall = new THREEx.CannonBody({
+					mesh : ball,
+					material : stoneMaterial
+				});
+				balls.push(bodyBall);
+
+				balls[i].addTo(world);
+
+				dropBall(balls[i]);
+			}
+			updateFcts.push(function(delta, now) {
+				balls.forEach(function(bodyBall) {
+					bodyBall.update(delta, now);
+				});
+			});
 
 			var tableGround = new THREE.Mesh(new THREE.CubeGeometry(KICKER_WIDTH, 1, KICKER_LENGTH), new THREE.MeshLambertMaterial({ map: texture, color: 0xffffff }));
 			tableGround.position.y = -3;
@@ -163,7 +170,7 @@
 			stange.rotation.z = Math.PI / 2;
 			scene.add(stange);
 
-			var player = new THREE.Mesh(new THREE.CubeGeometry(3, 7, 1), new THREE.MeshLambertMaterial());
+			var player = new THREE.Mesh(new THREE.CubeGeometry(3, 7, 1), new THREE.MeshLambertMaterial({ color: 0xc00000 }));
 			player.position.y = 2;
 			player.castShadow = true;
 			scene.add(player);
@@ -174,9 +181,9 @@
 			});
 			bodyPlayer.addTo(world);
 
-			// updateFcts.push(function(delta, now) {
-			// 	bodyPlayer.update(delta, now);
-			// });
+			updateFcts.push(function(delta, now) {
+				bodyPlayer.update(delta, now);
+			});
 
 			updateFcts.push(function() {
 				renderer.render(scene, camera);
@@ -186,21 +193,13 @@
 
 			function deg2rad(deg) {
 				var rad = deg * (Math.PI / 180);
-				console.debug(rad);
 				return rad;
 			}
 
 			document.addEventListener('wheel', function(event) {
 				kick += event.deltaY > 0 ? deg2rad(10) : deg2rad(-10);
-			});
 
-			var lastTimeMsec = null;
-			requestAnimationFrame(function animate(nowMsec) {
-				requestAnimationFrame(animate);
-
-				lastTimeMsec = lastTimeMsec || nowMsec - 1000/60;
-				var deltaMsec = Math.min(200, nowMsec - lastTimeMsec);
-				lastTimeMsec = nowMsec;
+//				bodyPlayer.body.angularVelocity.set(200, 0, 0); //.rotation.x = kick * 2.5;
 
 				var deltaKick = bodyPlayer.mesh.rotation.x - kick;
 				if (deltaKick > 0.1 || deltaKick <  0.1) {
@@ -211,6 +210,17 @@
 						bodyPlayer.mesh.rotation.x -= 0.1;
 					}
 				}
+//				bodyPlayer.mesh.angularVelocity.set(200, 0, 0);
+				bodyPlayer.mesh.rotation.x = kick;
+			});
+
+			var lastTimeMsec = null;
+			requestAnimationFrame(function animate(nowMsec) {
+				requestAnimationFrame(animate);
+
+				lastTimeMsec = lastTimeMsec || nowMsec - 1000/60;
+				var deltaMsec = Math.min(200, nowMsec - lastTimeMsec);
+				lastTimeMsec = nowMsec;
 
 				updateFcts.forEach(function(updateFn) {
 					updateFn(deltaMsec / 1000, nowMsec / 1000);
@@ -226,10 +236,9 @@
 						break;
 
 					case  27:
-						bodyBall.body.position.x = Math.random() * KICKER_LENGTH;
-						bodyBall.body.position.z = Math.random() * KICKER_WIDTH;
-	//					bodyBall.body.position.y = Math.random() * 20;
-						bodyBall.body.angularVelocity.set(Math.random()* 400, Math.random() * 400, Math.random * 400);
+						balls.forEach(function(bodyBall){
+							dropBall(bodyBall);
+						});
 						break;
 
 					case 49:
@@ -248,7 +257,10 @@
 				}
 			});
 
-
+			document.addEventListener('mousemove', function(event){
+				stange.position.x = (-KICKER_WIDTH / 2) + (KICKER_WIDTH * (event.clientX / window.innerWidth));
+				bodyPlayer.body.position.x = (-KICKER_WIDTH / 2) + (KICKER_WIDTH * (event.clientX / window.innerWidth));
+			});
 		}
 		</script>
 	</body>

@@ -564,44 +564,44 @@
 
 		}
 
-		function onMouseWheel( event ) {
+		// function onMouseWheel( event ) {
 
-			if ( scope.enabled === false || scope.enableZoom === false || state !== STATE.NONE ) return;
+		// 	if ( scope.enabled === false || scope.enableZoom === false || state !== STATE.NONE ) return;
 
-			event.preventDefault();
-			event.stopPropagation();
+		// 	event.preventDefault();
+		// 	event.stopPropagation();
 
-			var delta = 0;
+		// 	var delta = 0;
 
-			if ( event.wheelDelta !== undefined ) {
+		// 	if ( event.wheelDelta !== undefined ) {
 
-				// WebKit / Opera / Explorer 9
+		// 		// WebKit / Opera / Explorer 9
 
-				delta = event.wheelDelta;
+		// 		delta = event.wheelDelta;
 
-			} else if ( event.detail !== undefined ) {
+		// 	} else if ( event.detail !== undefined ) {
 
-				// Firefox
+		// 		// Firefox
 
-				delta = - event.detail;
+		// 		delta = - event.detail;
 
-			}
+		// 	}
 
-			if ( delta > 0 ) {
+		// 	if ( delta > 0 ) {
 
-				constraint.dollyOut( getZoomScale() );
+		// 		constraint.dollyOut( getZoomScale() );
 
-			} else if ( delta < 0 ) {
+		// 	} else if ( delta < 0 ) {
 
-				constraint.dollyIn( getZoomScale() );
+		// 		constraint.dollyIn( getZoomScale() );
 
-			}
+		// 	}
 
-			scope.update();
-			scope.dispatchEvent( startEvent );
-			scope.dispatchEvent( endEvent );
+		// 	scope.update();
+		// 	scope.dispatchEvent( startEvent );
+		// 	scope.dispatchEvent( endEvent );
 
-		}
+		// }
 
 		function onKeyDown( event ) {
 
@@ -777,8 +777,8 @@
 
 			this.domElement.removeEventListener( 'contextmenu', contextmenu, false );
 			this.domElement.removeEventListener( 'mousedown', onMouseDown, false );
-			this.domElement.removeEventListener( 'mousewheel', onMouseWheel, false );
-			this.domElement.removeEventListener( 'MozMousePixelScroll', onMouseWheel, false ); // firefox
+//			this.domElement.removeEventListener( 'mousewheel', onMouseWheel, false );
+			// this.domElement.removeEventListener( 'MozMousePixelScroll', onMouseWheel, false ); // firefox
 
 			this.domElement.removeEventListener( 'touchstart', touchstart, false );
 			this.domElement.removeEventListener( 'touchend', touchend, false );
@@ -794,8 +794,8 @@
 		this.domElement.addEventListener( 'contextmenu', contextmenu, false );
 
 		this.domElement.addEventListener( 'mousedown', onMouseDown, false );
-		this.domElement.addEventListener( 'mousewheel', onMouseWheel, false );
-		this.domElement.addEventListener( 'MozMousePixelScroll', onMouseWheel, false ); // firefox
+		// this.domElement.addEventListener( 'mousewheel', onMouseWheel, false );
+		// this.domElement.addEventListener( 'MozMousePixelScroll', onMouseWheel, false ); // firefox
 
 		this.domElement.addEventListener( 'touchstart', touchstart, false );
 		this.domElement.addEventListener( 'touchend', touchend, false );
