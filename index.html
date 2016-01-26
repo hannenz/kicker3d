@@ -20,8 +20,8 @@
 		var KICKER_WIDTH = 68;
 		var KICKER_LENGTH = 120;
 		var KICKER_HEIGHT = 7;
-		var BALL_RADIUS = 1;
-		var N_BALLS = 20;
+		var BALL_RADIUS = 1.6; // 32 - 45mm Durchmesser
+		var N_BALLS = 30;
 
 		var kick = 0;
 
@@ -35,6 +35,9 @@
 		camera.position.y = 30;
 
 		var renderer = new THREE.WebGLRenderer();
+		renderer.shadowMapEnabled = true;
+		renderer.shadowMapSoft = true;
+		renderer.shadowMapType = THREE.PCFSoftShadowMap;
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		document.body.appendChild(renderer.domElement);
 
@@ -53,12 +56,18 @@
 		var light	= new THREE.AmbientLight( 0x444444 );
 		scene.add( light );
 
-		var light = new THREE.PointLight(0xffffff);
-		light.castShadow = true;
-		light.position.x = 0;
-		light.position.y = 100;
-		light.position.z = 0;
-		scene.add(light);
+		// var light = new THREE.PointLight(0xffffff);
+		// light.position.x = 0;
+		// light.position.y = 100;
+		// light.position.z = 0;
+		// scene.add(light);
+
+		var dLight = new THREE.DirectionalLight(0xffffff);
+		dLight.castShadow = true;
+		dLight.position.x = 0;
+		dLight.position.y = 200;
+		dLight.position.z = 0;
+		scene.add(dLight);
 
 		// var loader = new THREE.JSONLoader();
 		// loader.load('yoda.js', insertYoda);
@@ -93,9 +102,10 @@
 
 		function setup() {
 
-			for (var i = 0; i < 20; i++) {
+			for (var i = 0; i < N_BALLS; i++) {
 
 				var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS, 16, 16), new THREE.MeshLambertMaterial( { color: 0xe0e0e0 }));
+				ball.castShadow = false;
 				scene.add(ball);
 
 				var bodyBall = new THREEx.CannonBody({
@@ -117,6 +127,7 @@
 			var tableGround = new THREE.Mesh(new THREE.CubeGeometry(KICKER_WIDTH, 1, KICKER_LENGTH), new THREE.MeshLambertMaterial({ map: texture, color: 0xffffff }));
 			tableGround.position.y = -3;
 			tableGround.position.z = 0;
+			tableGround.receiveShadow = true;
 			scene.add(tableGround);
 			var bodyGround = new THREEx.CannonBody({
 				mesh : tableGround,
@@ -170,8 +181,11 @@
 			stange.rotation.z = Math.PI / 2;
 			scene.add(stange);
 
-			var player = new THREE.Mesh(new THREE.CubeGeometry(3, 7, 1), new THREE.MeshLambertMaterial({ color: 0xc00000 }));
-			player.position.y = 2;
+			var cubeGeo =  new THREE.CubeGeometry(3, 7, 1);
+			cubeGeo.translate(0, 0, 0);
+			var player = new THREE.Mesh(cubeGeo, new THREE.MeshLambertMaterial({ color: 0xc00000 }));
+			player.position.y = 1;
+			player.position.z = 0;
 			player.castShadow = true;
 			scene.add(player);
 			bodyPlayer = new THREEx.CannonBody({
@@ -260,6 +274,7 @@
 			document.addEventListener('mousemove', function(event){
 				stange.position.x = (-KICKER_WIDTH / 2) + (KICKER_WIDTH * (event.clientX / window.innerWidth));
 				bodyPlayer.body.position.x = (-KICKER_WIDTH / 2) + (KICKER_WIDTH * (event.clientX / window.innerWidth));
+				// player.position.x = (-KICKER_WIDTH / 2) + (KICKER_WIDTH * (event.clientX / window.innerWidth));
 			});
 		}
 		</script>
