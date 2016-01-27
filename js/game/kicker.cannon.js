@@ -34,6 +34,7 @@ window.game.cannon = function() {
 		},
 
 		createRigidBody: function(options) {
+
 			var body = new CANNON.Body({
 				mass: options.mass,
 				shape: options.shape,
@@ -68,6 +69,7 @@ window.game.cannon = function() {
 			}
 
 			if (mesh) {
+//				mesh.rotation.x = Math.PI / 2;
 				_cannon.bodies.push(body);
 				_cannon.visuals.push(mesh);
 
@@ -131,14 +133,18 @@ window.game.cannon = function() {
 				var body = _cannon.bodies[i], visual = _cannon.visuals[i];
 
 				// Copy FROM visual TO body...
-				body.position.copy(visual.position);
+				// console.debug(body.position);
+				// body.position.copy(visual.position);
+				// console.debug(body.position);
+
+				visual.position.x = body.position.x;
+				visual.position.y = body.position.y;
+				visual.position.z = body.position.z;
 
 				if (body.quaternion) {
 					body.quaternion.copy(visual.quaternion);
 				}
 			}
-
-			console.debug('World Step with timestep=' + _cannon.timestep);
 
 			_cannon.world.step(_cannon.timestep);
 		},

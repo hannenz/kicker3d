@@ -1,6 +1,7 @@
 window.game = window.game || {};
 
 window.game.core = function() {
+	var ball;
 	var _game = {
 
 		table : {
@@ -13,18 +14,18 @@ window.game.core = function() {
 				var tableLength = 120;
 				var tableHeight = 7;
 
-				_cannon.createRigidBody({
+				var ground = _cannon.createRigidBody({
 					shape: new CANNON.Box(new CANNON.Vec3(tableWidth, tableLength, 1)),
 					mass: 0,
 					position: new CANNON.Vec3(0, 0, 0),
 					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
-					physicsMaterial: _cannon.solidMaterial
+					physicsMaterial: _cannon.solidMaterial,
 				});
 
 				_cannon.createRigidBody({
 					shape: new CANNON.Box(new CANNON.Vec3(tableWidth, 1, tableHeight)),
 					mass: 0,
-					position: new CANNON.Vec3(0, -120, tableHeight),
+					position: new CANNON.Vec3(0, -tableLength, tableHeight),
 					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
 					physicsMaterial: _cannon.solidMaterial
 				});
@@ -32,7 +33,7 @@ window.game.core = function() {
 				_cannon.createRigidBody({
 					shape: new CANNON.Box(new CANNON.Vec3(tableWidth, 1, tableHeight)),
 					mass: 0,
-					position: new CANNON.Vec3(0, 120, tableHeight),
+					position: new CANNON.Vec3(0, tableLength, tableHeight),
 					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
 					physicsMaterial: _cannon.solidMaterial
 				});
@@ -40,7 +41,7 @@ window.game.core = function() {
 				_cannon.createRigidBody({
 					shape: new CANNON.Box(new CANNON.Vec3(1, tableLength, tableHeight)),
 					mass: 0,
-					position: new CANNON.Vec3(-68, 0, tableHeight),
+					position: new CANNON.Vec3(-tableWidth, 0, tableHeight),
 					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
 					physicsMaterial: _cannon.solidMaterial
 				});
@@ -48,18 +49,19 @@ window.game.core = function() {
 				_cannon.createRigidBody({
 					shape: new CANNON.Box(new CANNON.Vec3(1, tableLength, tableHeight)),
 					mass: 0,
-					position: new CANNON.Vec3(68, 0, tableHeight),
+					position: new CANNON.Vec3(tableWidth, 0, tableHeight),
 					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
 					physicsMaterial: _cannon.solidMaterial
 				});
 
-				_cannon.createRigidBody({
+				ball = _cannon.createRigidBody({
 					shape: new CANNON.Sphere(1.6),
 					mass: 1.6*1.6*1.6 * Math.PI * 4/3 * 5, // Dichte: 5 geraten, Masse = Volumen * Dichte, V(Kugel) = r hoch 3 * Pi*4/3
 					position: new CANNON.Vec3(0, 0, 10),
 					meshMaterial: new THREE.MeshLambertMaterial({ color: 0xffffff }),
 					physicsMaterial: _cannon.solidMaterial
 				});
+				ball.angularVelocity.set(100, 0, 0);
 			}
 		},
 
