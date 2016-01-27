@@ -60,17 +60,15 @@
 		light.position.z = 0;
 		scene.add(light);
 
-		// var loader = new THREE.JSONLoader();
-		// loader.load('yoda.js', insertYoda);
 
 		function insertYoda(geometry, materials) {
 
 			var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
 			mesh.scale.set(0.01, 0.01, 0.01);
-			mesh.position.y = -2;
+			mesh.position.y = 20;
 
 			mesh.position.x = 20;
-			mesh.position.z = -30;
+			mesh.position.z = 120;
 
 			scene.add(mesh);
 
@@ -229,6 +227,8 @@
 
 			document.addEventListener('keyup', function(e) {
 
+				console.debug(e.keyCode);
+
 				switch (e.keyCode) {
 					case 13: 
 						console.log('Kickin\'...!')
@@ -254,6 +254,13 @@
 						camera.position.y = 100;
 						camera.lookAt(new THREE.Vector3(0, 0, 0));
 						break;
+
+					case 89:
+						var loader = new THREE.JSONLoader();
+						loader.load('Test_Typ.js', insertYoda);
+						break;
+
+
 				}
 			});
 
