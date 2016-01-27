@@ -4,19 +4,35 @@
 		<meta charset=utf-8>
 		<title>Table Footbal</title>
 		<style>
-			body { margin: 0; }
+			body { margin: 0; width:100%; height:100%; max-height:100%; overflow:hidden; }
 			canvas { width: 100%; height: 100% }
 		</style>
 	</head>
 	<body>
-		<script src="js/three.min.js"></script>
+		<script src="js/libs/three.min.js"></script>
 		<!--script src="/home/hannenz/Downloads/threex.oimo/threex.oimo.js"></script-->
-		<script src="js/threex.cannonjs/vendor/cannon.js/build/cannon.min.js"></script>
-		<script src="js/threex.cannonjs/threex.cannonworld.js"></script>
-		<script src="js/threex.cannonjs/threex.cannonbody.js"></script>
-		<script src="js/OrbitControls.js"></script>
+<!--
+		<script src="js/lisb/threex.cannonjs/vendor/cannon.js/build/cannon.min.js"></script>
+		<script src="js/lisb/threex.cannonjs/threex.cannonworld.js"></script>
+		<script src="js/libs/threex.cannonjs/threex.cannonbody.js"></script>
+-->
+		<script src="js/libs/OrbitControls.js"></script>
+
+		<script src="js/libs/cannon.min.js"></script>
+		<script src="js/game/kicker.core.js"></script>
+		<script src="js/game/kicker.three.js"></script>
+		<script src="js/game/kicker.cannon.js"></script>
+		<script src="js/game/kicker.events.js"></script>
 		<script>
 
+		window.gameInstance = window.game.core();
+		window.gameInstance.init({
+			domContainer: document.getElementById('kicker'),
+//			rendererClearColor: window.game.static.white
+		});
+
+
+/*
 		var KICKER_WIDTH = 68;
 		var KICKER_LENGTH = 120;
 		var KICKER_HEIGHT = 7;
@@ -42,8 +58,9 @@
 		document.body.appendChild(renderer.domElement);
 
 		var world = new THREEx.CannonWorld().start();
-		console.debug(world.world.gravity);
 		world.world.gravity.set(0, -50, 0);
+		world.world.broadphase = new CANNON.NaiveBroadphase();
+		world.world.solver.iterations = 5;
 
 		var stoneMaterial = new CANNON.Material('stone');
 		world.world.addContactMaterial(new CANNON.ContactMaterial(
@@ -224,6 +241,13 @@
 				}
 //				bodyPlayer.mesh.angularVelocity.set(200, 0, 0);
 				bodyPlayer.mesh.rotation.x = kick;
+               // bodyPlayer.body.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), bodyPlayer, bodyPlayer.mesh.rotation.x);
+
+				bodyPlayer.body.position.copy(player.position);
+				if (bodyPlayer.body.quaternion || true) {
+					console.debug('Copying quaternion');
+					bodyPlayer.body.quaternion.copy(player.quaternion);
+				}
 			});
 
 			var lastTimeMsec = null;
@@ -284,6 +308,9 @@
 				// player.position.x = (-KICKER_WIDTH / 2) + (KICKER_WIDTH * (event.clientX / window.innerWidth));
 			});
 		}
+		*/
 		</script>
+
+		<div id="kicker"></div>
 	</body>
 </html>
