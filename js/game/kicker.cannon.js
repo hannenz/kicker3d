@@ -90,8 +90,8 @@ window.game.cannon = function() {
 				var n = _cannon.bodies.length;
 
 				for (var i = 0; i < n; i++) {
-					old_b.unsihft(_cannon.bodies.pop());
-					old_v.unsihift(_cannon.visuals.pop());
+					old_b.unshift(_cannon.bodies.pop());
+					old_v.unshift(_cannon.visuals.pop());
 				}
 
 				var id = body.visualref.visualId;
@@ -141,8 +141,9 @@ window.game.cannon = function() {
 				visual.position.y = body.position.y;
 				visual.position.z = body.position.z;
 
-				if (body.quaternion) {
-					body.quaternion.copy(visual.quaternion);
+				if (visual.quaternion) {
+//					body.quaternion.copy(visual.quaternion);
+					visual.quaternion.copy(body.quaternion);
 				}
 			}
 
@@ -157,6 +158,8 @@ window.game.cannon = function() {
 				case CANNON.Shape.types.SPHERE:
 					var sphere_geometry = new THREE.SphereGeometry(shape.radius, 16, 16);
 					mesh = new THREE.Mesh(sphere_geometry, currentMaterial);
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
 					break;
 
 				case CANNON.Shape.types.PLANE:
@@ -200,6 +203,16 @@ window.game.cannon = function() {
 						o3d.add(submesh);
 						mesh = o3d;
 					}
+					break;
+
+				case CANNON.Shape.types.CONVEXPOLYHEDRON:
+				case CANNON.Shape.types.CYLINDER:
+
+					/* FIXME: use variable parameters!!! */
+					var cylinder_geometry = new THREE.CylinderGeometry(0.5, 0.5, 100, 32);
+					mesh = new THREE.Mesh(cylinder_geometry, currentMaterial);
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
 					break;
 
 				default:

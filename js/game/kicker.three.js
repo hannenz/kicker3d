@@ -25,10 +25,13 @@ window.game.three = function() {
 
 			_three.camera = new THREE.PerspectiveCamera(_three.fov, (window.innerWidth - _three.cameraSizeConstraint.width) / (window.innerHieght - _three.cameraSizeConstraint.height), 1, 150000 );
 			_three.camera.up.set(0, 0, 1);
-			_three.camera.position.set(0, 0, 500);
+			_three.camera.position.set(0, -500, 100);
 			_three.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 			_three.renderer = new THREE.WebGLRenderer({ antialias: true });
+			_three.renderer.shadowMap.enabled = true;
+			_three.renderer.shadowMapSoft = true;
+			_three.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 			if (options && typeof options.rendererClearColor === "number") {
 				_three.renderer.setClearColor(options.rendererClearColor, 1);
