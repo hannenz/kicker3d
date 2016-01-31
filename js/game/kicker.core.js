@@ -4,7 +4,9 @@ window.game.core = function() {
 	var ball;
 	var _game = {
 
-		numberOfBalls : 50,
+		rot: 0,
+
+		numberOfBalls : 25,
 
 		poles : {
 			playerA : [],
@@ -24,6 +26,12 @@ window.game.core = function() {
 				}
 
 				_game.poles.playerA[0].pole.position.x = (-_game.table.tableWidth / 2) + (_game.table.tableWidth * _events.mouse.xPerc);
+
+
+				if (_events.mouse.wheel > 0) {
+					console.debug ('Applying impulse to pole');
+					_game.poles.playerA[0].pole.applyImpulse(new CANNON.Vec3(0, 1, 0), new CANNON.Vec3(0, 0, 0.5));
+				}
 			}
 		},
 
@@ -46,19 +54,31 @@ window.game.core = function() {
 				 *************/
 
 				// Ground
+				var textureLoader = new THREE.TextureLoader();
+				textureLoader.load(
+					'img/kicker_carpet.svg', 
+					function(texture) {
+						console.debug('Finished loading texture');
 
-				var ground = _cannon.createRigidBody({
-					shape: new CANNON.Box(new CANNON.Vec3(_game.table.tableWidth / 2, _game.table.tableLength / 2, 0.5)),
-					mass: 0,
-					position: new CANNON.Vec3(0, 0, 0),
-					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
-					physicsMaterial: _cannon.solidMaterial,
-				});
-				var texture = THREE.ImageUtils.loadTexture('img/kicker_carpet.svg', {}, function() {
+						var material = new THREE.MeshLambertMaterial({
+							map: texture
+						});
 
-					ground.visualref.material = new THREE.MeshLambertMaterial({ map: texture});
-					
-				});
+						var ground = _cannon.createRigidBody({
+							shape: new CANNON.Box(new CANNON.Vec3(_game.table.tableWidth / 2, _game.table.tableLength / 2, 0.5)),
+							mass: 0,
+							position: new CANNON.Vec3(0, 0, 0),
+							physicsMaterial: _cannon.solidMaterial,
+							meshMaterial: material
+						});
+					},
+					function(xhr) {
+						console.debug('Loading progresses');
+					},
+					function(xhr) {
+						console.debug('Error loading texture');
+					}
+				);
 
 				// Walls short
 				_cannon.createRigidBody({
@@ -78,7 +98,7 @@ window.game.core = function() {
 				});
 
 				// Walls long
-				_cannon.createRigidBody({
+				var sideWall1 = _cannon.createRigidBody({
 					shape: new CANNON.Box(new CANNON.Vec3(0.5, _game.table.tableLength / 2, _game.table.tableHeight / 2)),
 					mass: 0,
 					position: new CANNON.Vec3(-_game.table.tableWidth / 2, 0, _game.table.tableHeight / 2),
@@ -86,7 +106,7 @@ window.game.core = function() {
 					physicsMaterial: _cannon.solidMaterial
 				});
 
-				_cannon.createRigidBody({
+				var sideWall2 = _cannon.createRigidBody({
 					shape: new CANNON.Box(new CANNON.Vec3(0.5, _game.table.tableLength / 2, _game.table.tableHeight / 2)),
 					mass: 0,
 					position: new CANNON.Vec3(_game.table.tableWidth / 2, 0, _game.table.tableHeight / 2),
@@ -94,37 +114,33 @@ window.game.core = function() {
 					physicsMaterial: _cannon.solidMaterial
 				});
 
+				var poleCompound = new CANNON.Body({mass: 1});
+				poleCompound.position.set(0, 0, _game.table.tableHeight -2);
+				poleCompound.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
 
-				// A pole
-				var pole = _cannon.createRigidBody({
-					shape: new CANNON.Cylinder(0.5, 0.5, 100, 32),
-					mass: 0,
-					position: new CANNON.Vec3(0, 0, _game.table.tableHeight - 2),
-					meshMaterial: new THREE.MeshLambertMaterial({ color : 0xcccccc }),
-					physicsMaterial: _cannon.solidMaterial
-				});
-				pole.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+				var pole = new CANNON.Cylinder(0.5, 0.5, 100, 32);
+				poleCompound.addShape(pole, new CANNON.Vec3(0, 0, 0));
 
-				// Create Players for pole
-				var players = [];
-				for (i = 0; i < 3; i++) {
-					var player = _cannon.createRigidBody({
-						shape: new CANNON.Box(new CANNON.Vec3(2, 0.75, 3.5)),
-						mass: 0,
-						position: new CANNON.Vec3((i - 1) * 15, 0, 5),
-						meshMaterial: new THREE.MeshLambertMaterial({ color: 0xc00000 }),
-						physicsMaterial: _cannon.solidMaterial
-					});
-					player.angularVelocity.set(100, 0, 0);
-
-					var cnstr = new CANNON.LockConstraint(player, pole);
-					_cannon.world.addConstraint(cnstr);
-
+				var players = Array();
+				for (i = 0; i < 5; i++) {
+					var player = new CANNON.Box(new CANNON.Vec3(2, 0.75, 3.5));
+					var q = new CANNON.Quaternion();
+					q.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+					poleCompound.addShape(player, new CANNON.Vec3(0, (i - 2) * 12, 0), q);
 					players.push(player);
 				}
 
-				_game.poles.playerA.push({ pole: pole, players: players});
-				console.debug(_game.poles);
+				// var c = new CANNON.HingeConstraint(sideWall1, poleCompound, {
+				// 	pivota: new CANNON.Vec3(0, 0, 0),
+				// 	axisA : new CANNON.Vec3(1, 0, 0)
+				// });
+				// _cannon.world.addConstraint(c);
+
+
+				_cannon.addVisual(poleCompound, new THREE.MeshLambertMaterial({ color : 0xcccccc }));
+				_cannon.world.addBody(poleCompound);
+
+				_game.poles.playerA.push({ pole: poleCompound, players: players});
 			}
 		},
 
@@ -136,7 +152,7 @@ window.game.core = function() {
 
 		play: function() {
 
-			// Play balls!
+			//Play balls!
 
 			for (i = 0; i < _game.balls.length; i++) {
 
@@ -145,7 +161,7 @@ window.game.core = function() {
 				_three.scene.remove(_game.balls[i].visualref);
 				_cannon.world.remove(_game.balls[i]);
 			}
-				_game.balls = Array();
+			_game.balls = Array();
 
 			for (var i = 0; i < _game.numberOfBalls; i++) {
 
@@ -175,6 +191,19 @@ window.game.core = function() {
 			_cannon.updatePhysics();
 			_game.player.update();
 			_three.render();
+
+			return;
+
+			// First we need  to keep the pole rotate around the Z-Axis, then we "add" (multiply) 
+			// the rotation aroung the X-Axis as needed..
+			var q1 = new CANNON.Quaternion();
+			q1.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), _game.rot);
+			_game.poles.playerA[0].pole.quaternion = q1.mult(_game.poles.playerA[0].pole.quaternion);
+
+			_game.rot += 0.001;
+			if (_game.rot > Math.PI) {
+				_game.rot = 0;
+			}
 
 		},
 

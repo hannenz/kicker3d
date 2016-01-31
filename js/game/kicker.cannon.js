@@ -65,7 +65,7 @@ window.game.cannon = function() {
 			var mesh = customMesh || null;
 
 			if (body instanceof CANNON.Body && !mesh) {
-				mesh = _cannon.shape2mesh(body.shapes[0], material);
+				mesh = _cannon.shape2mesh(body, material);
 			}
 
 			if (mesh) {
@@ -150,94 +150,108 @@ window.game.cannon = function() {
 			_cannon.world.step(_cannon.timestep);
 		},
 
-		shape2mesh: function(shape, currentMaterial) {
-			var mesh;
+		shape2mesh: function(body, currentMaterial) {
 			var submesh;
+			var obj = new THREE.Object3D();
 
-			switch (shape.type){
-				case CANNON.Shape.types.SPHERE:
-					var sphere_geometry = new THREE.SphereGeometry(shape.radius, 16, 16);
-					mesh = new THREE.Mesh(sphere_geometry, currentMaterial);
-					mesh.castShadow = true;
-					mesh.receiveShadow = true;
-					break;
+			for (var i = 0; i < body.shapes.length; i++) {
 
-				case CANNON.Shape.types.PLANE:
-					var geometry = new THREE.PlaneGeometry(100, 100);
-					mesh = new THREE.Object3D();
-					submesh = new THREE.Object3D();
-					var ground = new THREE.Mesh(geometry, currentMaterial);
-					ground.scale = new THREE.Vector3(1000, 1000, 1000);
-					submesh.add(ground);
+				var shape = body.shapes[i];
+				var mesh;
 
-					ground.castShadow = true;
-					ground.receiveShadow = true;
+				switch (shape.type){
+					case CANNON.Shape.types.SPHERE:
+						var sphere_geometry = new THREE.SphereGeometry(shape.radius, 16, 16);
+						mesh = new THREE.Mesh(sphere_geometry, currentMaterial);
+						mesh.castShadow = true;
+						mesh.receiveShadow = true;
+						break;
 
-					mesh.add(submesh);
-					break;
+					case CANNON.Shape.types.PLANE:
+						var geometry = new THREE.PlaneGeometry(100, 100);
+						mesh = new THREE.Object3D();
+						submesh = new THREE.Object3D();
+						var ground = new THREE.Mesh(geometry, currentMaterial);
+						ground.scale = new THREE.Vector3(1000, 1000, 1000);
+						submesh.add(ground);
 
-				case CANNON.Shape.types.BOX:
-					var box_geometry = new THREE.CubeGeometry(shape.halfExtents.x * 2,
-							shape.halfExtents.y * 2,
-							shape.halfExtents.z * 2);
-					mesh = new THREE.Mesh(box_geometry, currentMaterial);
-					mesh.castShadow = true;
-					mesh.receiveShadow = true;
-					break;
+						ground.castShadow = true;
+						ground.receiveShadow = true;
 
-				case CANNON.Shape.types.COMPOUND:
-					// recursive compounds
-					var o3d = new THREE.Object3D();
-					for(var i = 0; i<shape.childShapes.length; i++){
+						mesh.add(submesh);
+						break;
 
-						// Get child information
-						var subshape = shape.childShapes[i];
-						var o = shape.childOffsets[i];
-						var q = shape.childOrientations[i];
+					case CANNON.Shape.types.BOX:
+						var box_geometry = new THREE.CubeGeometry(shape.halfExtents.x * 2,
+								shape.halfExtents.y * 2,
+								shape.halfExtents.z * 2);
+						mesh = new THREE.Mesh(box_geometry, currentMaterial);
+						mesh.castShadow = true;
+						mesh.receiveShadow = true;
+						break;
 
-						submesh = _cannon.shape2mesh(subshape);
-						submesh.position.set(o.x,o.y,o.z);
-						submesh.quaternion.set(q.x,q.y,q.z,q.w);
+					// case CANNON.Shape.types.COMPOUND:
+					// 	// recursive compounds
+					// 	var o3d = new THREE.Object3D();
+					// 	for(var i = 0; i<shape.childShapes.length; i++){
 
-						submesh.useQuaternion = true;
-						o3d.add(submesh);
-						mesh = o3d;
-					}
-					break;
+					// 		// Get child information
+					// 		var subshape = shape.childShapes[i];
+					// 		var o = shape.childOffsets[i];
+					// 		var q = shape.childOrientations[i];
 
-				case CANNON.Shape.types.CONVEXPOLYHEDRON:
-				case CANNON.Shape.types.CYLINDER:
+					// 		submesh = _cannon.shape2mesh(subshape);
+					// 		submesh.position.set(o.x,o.y,o.z);
+					// 		submesh.quaternion.set(q.x,q.y,q.z,q.w);
 
-					/* FIXME: use variable parameters!!! */
-					var cylinder_geometry = new THREE.CylinderGeometry(0.5, 0.5, 100, 32);
-					mesh = new THREE.Mesh(cylinder_geometry, currentMaterial);
-					mesh.castShadow = true;
-					mesh.receiveShadow = true;
-					break;
+					// 		submesh.useQuaternion = true;
+					// 		o3d.add(submesh);
+					// 		mesh = o3d;
+					// 	}
+					// 	break;
 
-				default:
-					throw "Visual type not recognized: " + shape.type;
-			}
+					case CANNON.Shape.types.CONVEXPOLYHEDRON:
+					case CANNON.Shape.types.CYLINDER:
 
-			mesh.receiveShadow = true;
-			mesh.castShadow = true;
+						/* FIXME: use variable parameters!!! */
+						var cylinder_geometry = new THREE.CylinderGeometry(0.5, 0.5, 100, 32);
+						mesh = new THREE.Mesh(cylinder_geometry, currentMaterial);
+						mesh.castShadow = true;
+						mesh.receiveShadow = true;
+						break;
 
-			if (mesh.children) {
-				for (var i = 0; i < mesh.children.length; i++) {
-					mesh.children[i].castShadow = true;
-					mesh.children[i].receiveShadow = true;
+					default:
+						throw "Visual type not recognized: " + shape.type;
+				}
 
-					if (mesh.children[i]){
-						for(var j = 0; j < mesh.children[i].length; j++) {
-							mesh.children[i].children[j].castShadow = true;
-							mesh.children[i].children[j].receiveShadow = true;
+				mesh.receiveShadow = true;
+				mesh.castShadow = true;
+
+				if (mesh.children) {
+					for (var j = 0; j < mesh.children.length; j++) {
+						mesh.children[j].castShadow = true;
+						mesh.children[j].receiveShadow = true;
+
+						if (mesh.children[j]){
+							for(var k = 0; k < mesh.children[i].length; k++) {
+								mesh.children[j].children[k].castShadow = true;
+								mesh.children[j].children[k].receiveShadow = true;
+							}
 						}
 					}
 				}
+
+				var o = body.shapeOffsets[i];
+				var q = body.shapeOrientations[i];
+				mesh.position.set(o.x, o.y, o.z);
+				mesh.quaternion.set(q.x, q.y, q.z, q.w);
+
+				obj.add(mesh);
 			}
 
-			return mesh;
+			return obj;
 		},
+
 		showAABBs: function() {
 			// Show axis-aligned bounding boxes for debugging purposes - Cannon.js uses bounding spheres by default for its collision detection
 			var that = this;
