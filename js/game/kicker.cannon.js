@@ -7,7 +7,7 @@ window.game.cannon = function() {
 		bodies : [],
 		visuals : [],
 		bodyCount : 0,
-		friction : 0.0,
+		friction : 0,
 		restitution: 0.0,
 		gravity: -10,
 		timestep: 1 / 8,
@@ -54,7 +54,10 @@ window.game.cannon = function() {
 
 		createPhysicsMaterial: function(material, friction, restitution) {
 			var physicsMaterial = material || new CANNON.Material();
-			var contactMaterial = new CANNON.ContactMaterial(physicsMaterial, new CANNON.Material(), friction || _cannon.friction, restitution || _cannon.restitution);
+			var contactMaterial = new CANNON.ContactMaterial(physicsMaterial, new CANNON.Material(), {
+				friction: friction || _cannon.friction,
+				restitution: restitution || _cannon.restitution
+			});
 
 			_cannon.world.addContactMaterial(contactMaterial);
 
@@ -150,13 +153,14 @@ window.game.cannon = function() {
 			_cannon.world.step(_cannon.timestep);
 		},
 
+
 		shape2mesh: function(body, currentMaterial) {
 			var submesh;
 			var obj = new THREE.Object3D();
 
-			for (var i = 0; i < body.shapes.length; i++) {
+			for (var l = 0; l < body.shapes.length; l++) {
 
-				var shape = body.shapes[i];
+				var shape = body.shapes[l];
 				var mesh;
 
 				switch (shape.type){
@@ -182,9 +186,11 @@ window.game.cannon = function() {
 						break;
 
 					case CANNON.Shape.types.BOX:
-						var box_geometry = new THREE.CubeGeometry(shape.halfExtents.x * 2,
+						var box_geometry = new THREE.CubeGeometry(
+								shape.halfExtents.x * 2,
 								shape.halfExtents.y * 2,
-								shape.halfExtents.z * 2);
+								shape.halfExtents.z * 2
+							);
 						mesh = new THREE.Mesh(box_geometry, currentMaterial);
 						mesh.castShadow = true;
 						mesh.receiveShadow = true;
@@ -212,12 +218,35 @@ window.game.cannon = function() {
 
 					case CANNON.Shape.types.CONVEXPOLYHEDRON:
 					case CANNON.Shape.types.CYLINDER:
+			            var geo = new THREE.Geometry();
 
-						/* FIXME: use variable parameters!!! */
-						var cylinder_geometry = new THREE.CylinderGeometry(0.5, 0.5, 100, 32);
-						mesh = new THREE.Mesh(cylinder_geometry, currentMaterial);
-						mesh.castShadow = true;
-						mesh.receiveShadow = true;
+			            // Add vertices
+			            for (var i = 0; i < shape.vertices.length; i++) {
+			                var v = shape.vertices[i];
+			                geo.vertices.push(new THREE.Vector3(v.x, v.y, v.z));
+			            }
+
+			            for(var i=0; i < shape.faces.length; i++){
+			                var face = shape.faces[i];
+
+			                // add triangles
+			                var a = face[0];
+			                for (var j = 1; j < face.length - 1; j++) {
+			                    var b = face[j];
+			                    var c = face[j + 1];
+			                    geo.faces.push(new THREE.Face3(a, b, c));
+			                }
+			            }
+			            geo.computeBoundingSphere();
+			            geo.computeFaceNormals();
+			            mesh = new THREE.Mesh( geo, currentMaterial );
+
+
+					// 	/* FIXME: use variable parameters!!! */
+						// var cylinder_geometry = new THREE.CylinderGeometry(0.5, 0.5, 100, 32);
+						// mesh = new THREE.Mesh(cylinder_geometry, currentMaterial);
+						// mesh.castShadow = true;
+						// mesh.receiveShadow = true;
 						break;
 
 					default:
@@ -233,7 +262,7 @@ window.game.cannon = function() {
 						mesh.children[j].receiveShadow = true;
 
 						if (mesh.children[j]){
-							for(var k = 0; k < mesh.children[i].length; k++) {
+							for(var k = 0; k < mesh.children[j].length; k++) {
 								mesh.children[j].children[k].castShadow = true;
 								mesh.children[j].children[k].receiveShadow = true;
 							}
@@ -241,8 +270,8 @@ window.game.cannon = function() {
 					}
 				}
 
-				var o = body.shapeOffsets[i];
-				var q = body.shapeOrientations[i];
+				var o = body.shapeOffsets[l];
+				var q = body.shapeOrientations[l];
 				mesh.position.set(o.x, o.y, o.z);
 				mesh.quaternion.set(q.x, q.y, q.z, q.w);
 

@@ -25,7 +25,7 @@ window.game.three = function() {
 
 			_three.camera = new THREE.PerspectiveCamera(_three.fov, (window.innerWidth - _three.cameraSizeConstraint.width) / (window.innerHieght - _three.cameraSizeConstraint.height), 1, 150000 );
 			_three.camera.up.set(0, 0, 1);
-			_three.camera.position.set(0, -500, 100);
+			_three.camera.position.set(0, -300, 150);
 			_three.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 			_three.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -43,6 +43,9 @@ window.game.three = function() {
 			_three.domContainer.appendChild(_three.renderer.domElement);
 
 			_three.controls = new THREE.OrbitControls(_three.camera, _three.renderer.domElement);
+
+			// For debugging with Chrome THREE.js debugger extension
+			window.scene = _three.scene;
 		},
 
 		destroy: function() {

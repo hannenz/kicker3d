@@ -21,16 +21,36 @@ window.game.core = function() {
 			},
 
 			processUserInput: function() {
-				if (_events.keyboard.pressed['ESC']) {
-					_game.play();
-				}
 
-				_game.poles.playerA[0].pole.position.x = (-_game.table.tableWidth / 2) + (_game.table.tableWidth * _events.mouse.xPerc);
+				// return;
 
+				if (_game.poles.playerA.length > 0) {
 
-				if (_events.mouse.wheel > 0) {
-					console.debug ('Applying impulse to pole');
-					_game.poles.playerA[0].pole.applyImpulse(new CANNON.Vec3(0, 1, 0), new CANNON.Vec3(0, 0, 0.5));
+					if (_events.keyboard.pressed['ESC']) {
+						_game.play();
+					}
+					if (_events.keyboard.pressed['space']) {
+						console.debug(_game.poles.playerA[0].pole.velocity);
+					 	_game.poles.playerA[0].pole.applyForce(new CANNON.Vec3(100, 0, 0), new CANNON.Vec3(0.25, 0, 0));
+
+					}
+
+					// return ;
+
+					var x = (-_game.table.tableWidth / 2) + (_game.table.tableWidth * _events.mouse.xPerc);
+					if (x < -7.4) {
+						x = -7.4;
+					}
+					if (x > 7.4) {
+						x = 7.4;
+					}
+
+					_game.poles.playerA[0].pole.position.x = x;
+
+					// if (_events.mouse.wheel > 0) {
+					// 	console.debug ('Applying impulse to pole');
+					// 	_game.poles.playerA[0].pole.applyForce(new CANNON.Vec3(0, 0, 100), new CANNON.Vec3(0.25, 0, 0));
+					// }
 				}
 			}
 		},
@@ -46,31 +66,112 @@ window.game.core = function() {
 			// Create the kicker table, units are cm in real
 			create: function() {
 
-				_cannon.solidMaterial = _cannon.createPhysicsMaterial(new CANNON.Material('solidMaterial'), 0, 0.1);
+				_cannon.solidMaterial = _cannon.createPhysicsMaterial(new CANNON.Material('solidMaterial'), 0.3, 0.1);
 
 
 				/*************
 				 * THE TABLE *
 				 *************/
 
-				// Ground
 				var textureLoader = new THREE.TextureLoader();
 				textureLoader.load(
 					'img/kicker_carpet.svg', 
 					function(texture) {
-						console.debug('Finished loading texture');
 
 						var material = new THREE.MeshLambertMaterial({
 							map: texture
 						});
 
+						// Ground
 						var ground = _cannon.createRigidBody({
 							shape: new CANNON.Box(new CANNON.Vec3(_game.table.tableWidth / 2, _game.table.tableLength / 2, 0.5)),
 							mass: 0,
 							position: new CANNON.Vec3(0, 0, 0),
 							physicsMaterial: _cannon.solidMaterial,
-							meshMaterial: material
+							meshMaterial: material,
 						});
+
+						// Walls short
+						_cannon.createRigidBody({
+							shape: new CANNON.Box(new CANNON.Vec3(_game.table.tableWidth / 2 + 0.5, 0.5, _game.table.tableHeight / 2)),
+							mass: 0,
+							position: new CANNON.Vec3(0, -_game.table.tableLength / 2, _game.table.tableHeight / 2),
+							meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
+							physicsMaterial: _cannon.solidMaterial
+						});
+
+						_cannon.createRigidBody({
+							shape: new CANNON.Box(new CANNON.Vec3(_game.table.tableWidth / 2 + 0.5, 0.5, _game.table.tableHeight / 2)),
+							mass: 0,
+							position: new CANNON.Vec3(0, _game.table.tableLength / 2, _game.table.tableHeight / 2),
+							meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
+							physicsMaterial: _cannon.solidMaterial
+						});
+
+						// Walls long
+						var sideWall1 = _cannon.createRigidBody({
+							shape: new CANNON.Box(new CANNON.Vec3(0.5, _game.table.tableLength / 2, _game.table.tableHeight / 2)),
+							mass: 0,
+							position: new CANNON.Vec3(-_game.table.tableWidth / 2, 0, _game.table.tableHeight / 2),
+							meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
+							physicsMaterial: _cannon.solidMaterial
+						});
+
+						var sideWall2 = _cannon.createRigidBody({
+							shape: new CANNON.Box(new CANNON.Vec3(0.5, _game.table.tableLength / 2, _game.table.tableHeight / 2)),
+							mass: 0,
+							position: new CANNON.Vec3(_game.table.tableWidth / 2, 0, _game.table.tableHeight / 2),
+							meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
+							physicsMaterial: _cannon.solidMaterial
+						});
+
+						var poleCompound = new CANNON.Body({mass: 250 });
+						poleCompound.position.set(0, 0, _game.table.tableHeight + 1);
+						
+						var pole = new CANNON.Cylinder(0.5, 0.5, _game.table.tableWidth, 32);
+						var q = new CANNON.Quaternion();
+						q.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
+						poleCompound.addShape(pole, new CANNON.Vec3(0, 0, 0), q);
+
+						for (i = 0; i < 5; i++) {
+							var player = new CANNON.Box(new CANNON.Vec3(2, 0.75, 3.5));
+							poleCompound.addShape(player, new CANNON.Vec3((i - 2) * 12, 0, 0));
+						}
+
+						var c1 = new CANNON.HingeConstraint(sideWall1, poleCompound, {
+							pivotA: new CANNON.Vec3(0.5, 0, 1),
+							axisA : new CANNON.Vec3(1, 0, 0),
+							// pivotB: new CANNON.Vec3(-45, 0, 0),
+							pivotB: new CANNON.Vec3(-34, 0, 0),
+							// axisB : new CANNON.Vec3(1, 0, 0),
+							collideConnected: false
+						});
+
+						var c2 = new CANNON.HingeConstraint(sideWall2, poleCompound, {
+							pivotA: new CANNON.Vec3(0.5, 0, 1),
+							axisA : new CANNON.Vec3(1, 0, 0),
+							// pivotB: new CANNON.Vec3(45, 0, 0),
+							pivotB: new CANNON.Vec3(34, 0, 0),
+							// axisB : new CANNON.Vec3(1, 0, 0),
+							collideConnected: false
+						});
+
+						_cannon.world.addConstraint(c1);
+						_cannon.world.addConstraint(c2);
+
+
+
+						_cannon.addVisual(poleCompound, new THREE.MeshLambertMaterial({ color : 0xcccccc }));
+						_cannon.world.addBody(poleCompound);
+
+						// poleCompound.addEventListener('collide', function(e){
+
+						// 	if (e.body == sideWall1) {
+						// 		console.debug ('IT WAS THE LEFT SIDE WALL!');
+						// 	}
+						// });
+
+						_game.poles.playerA.push({ pole: poleCompound });
 					},
 					function(xhr) {
 						console.debug('Loading progresses');
@@ -79,68 +180,6 @@ window.game.core = function() {
 						console.debug('Error loading texture');
 					}
 				);
-
-				// Walls short
-				_cannon.createRigidBody({
-					shape: new CANNON.Box(new CANNON.Vec3(_game.table.tableWidth / 2 + 0.5, 0.5, _game.table.tableHeight / 2)),
-					mass: 0,
-					position: new CANNON.Vec3(0, -_game.table.tableLength / 2, _game.table.tableHeight / 2),
-					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
-					physicsMaterial: _cannon.solidMaterial
-				});
-
-				_cannon.createRigidBody({
-					shape: new CANNON.Box(new CANNON.Vec3(_game.table.tableWidth / 2 + 0.5, 0.5, _game.table.tableHeight / 2)),
-					mass: 0,
-					position: new CANNON.Vec3(0, _game.table.tableLength / 2, _game.table.tableHeight / 2),
-					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
-					physicsMaterial: _cannon.solidMaterial
-				});
-
-				// Walls long
-				var sideWall1 = _cannon.createRigidBody({
-					shape: new CANNON.Box(new CANNON.Vec3(0.5, _game.table.tableLength / 2, _game.table.tableHeight / 2)),
-					mass: 0,
-					position: new CANNON.Vec3(-_game.table.tableWidth / 2, 0, _game.table.tableHeight / 2),
-					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
-					physicsMaterial: _cannon.solidMaterial
-				});
-
-				var sideWall2 = _cannon.createRigidBody({
-					shape: new CANNON.Box(new CANNON.Vec3(0.5, _game.table.tableLength / 2, _game.table.tableHeight / 2)),
-					mass: 0,
-					position: new CANNON.Vec3(_game.table.tableWidth / 2, 0, _game.table.tableHeight / 2),
-					meshMaterial: new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
-					physicsMaterial: _cannon.solidMaterial
-				});
-
-				var poleCompound = new CANNON.Body({mass: 1});
-				poleCompound.position.set(0, 0, _game.table.tableHeight -2);
-				poleCompound.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
-
-				var pole = new CANNON.Cylinder(0.5, 0.5, 100, 32);
-				poleCompound.addShape(pole, new CANNON.Vec3(0, 0, 0));
-
-				var players = Array();
-				for (i = 0; i < 5; i++) {
-					var player = new CANNON.Box(new CANNON.Vec3(2, 0.75, 3.5));
-					var q = new CANNON.Quaternion();
-					q.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
-					poleCompound.addShape(player, new CANNON.Vec3(0, (i - 2) * 12, 0), q);
-					players.push(player);
-				}
-
-				// var c = new CANNON.HingeConstraint(sideWall1, poleCompound, {
-				// 	pivota: new CANNON.Vec3(0, 0, 0),
-				// 	axisA : new CANNON.Vec3(1, 0, 0)
-				// });
-				// _cannon.world.addConstraint(c);
-
-
-				_cannon.addVisual(poleCompound, new THREE.MeshLambertMaterial({ color : 0xcccccc }));
-				_cannon.world.addBody(poleCompound);
-
-				_game.poles.playerA.push({ pole: poleCompound, players: players});
 			}
 		},
 
@@ -191,20 +230,6 @@ window.game.core = function() {
 			_cannon.updatePhysics();
 			_game.player.update();
 			_three.render();
-
-			return;
-
-			// First we need  to keep the pole rotate around the Z-Axis, then we "add" (multiply) 
-			// the rotation aroung the X-Axis as needed..
-			var q1 = new CANNON.Quaternion();
-			q1.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), _game.rot);
-			_game.poles.playerA[0].pole.quaternion = q1.mult(_game.poles.playerA[0].pole.quaternion);
-
-			_game.rot += 0.001;
-			if (_game.rot > Math.PI) {
-				_game.rot = 0;
-			}
-
 		},
 
 		initComponents: function(options) {

@@ -17,6 +17,7 @@
 		<script src="js/libs/threex.cannonjs/threex.cannonbody.js"></script>
 -->
 		<script src="js/libs/OrbitControls.js"></script>
+		<script src="js/libs/stats.min.js"></script>
 
 		<script src="js/libs/cannon.min.js"></script>
 		<script src="js/game/kicker.core.js"></script>
@@ -30,6 +31,29 @@
 			domContainer: document.getElementById('kicker'),
 			rendererClearColor: 0x79C1C8
 		});
+
+		var stats = new Stats();
+		stats.setMode(0);
+		// align top-left
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.left = '0px';
+		stats.domElement.style.top = '0px';
+
+		document.body.appendChild( stats.domElement );
+
+		var update = function () {
+
+		    stats.begin();
+
+		    // monitored code goes here
+
+		    stats.end();
+
+		    requestAnimationFrame( update );
+
+		};
+
+		requestAnimationFrame( update );		
 
 /*
 		var KICKER_WIDTH = 68;
